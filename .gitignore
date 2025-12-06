@@ -1,24 +1,78 @@
+# --------------------------------------
+# Node / Core
+# --------------------------------------
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Dist / Build Output
+dist/
+build/
+vite.config.timestamp-*.mjs
+
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+*.log
 
-node_modules
-dist
-dist-ssr
-*.local
+# Cache
+.cache/
+.vite/
+.eslintcache
+.parcel-cache/
+.temp/
+tmp/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Coverage / Testing
+coverage/
+*.lcov
+
+# Optional: If using storybook
+storybook-static/
+.out/
+
+# Optional: If using Next.js or remix pieces
+.next/
+.vercel/
+
+# Optional: If using Docker
+docker-data/
+*.pid
+
+# Optional: If using EmailJS local mock
+emailjs.json
+
+# Build Artifacts for Images or Scripts
+*.png.compiled
+*.jpg.compiled
+*.svg.compiled
+
+# Local environment files or secrets
+secret.json
+keys.json
+
+# Prevent commits of generated assets
+public/generated/
+src/generated/
+
+# Cache for mac spotlight animations or precomputed data
+.cacheSpotlight/
+.cacheMetrics/
