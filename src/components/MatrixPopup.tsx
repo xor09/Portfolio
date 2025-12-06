@@ -91,6 +91,7 @@ export const MetricsPopup = () => {
   // -----------------------------
 
   useEffect(() => {
+    if(!showMetrics) return;
     // FPS
     getFPS((fps) => setMetrics((m) => ({ ...m, fps })));
 
@@ -107,7 +108,7 @@ export const MetricsPopup = () => {
         network: net ?? m.network,
         wsLoad: Math.floor(200 + Math.random() * 500),
       }));
-    }, 1500);
+    }, 3000);
 
     // Open/close through global events
     const openHandler = () => setShowMetrics(true);
