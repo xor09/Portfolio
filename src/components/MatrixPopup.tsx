@@ -91,7 +91,6 @@ export const MetricsPopup = () => {
   // -----------------------------
 
   useEffect(() => {
-    if(!showMetrics) return;
     // FPS
     getFPS((fps) => setMetrics((m) => ({ ...m, fps })));
 
@@ -122,7 +121,7 @@ export const MetricsPopup = () => {
       window.removeEventListener("open-metrics-popup", openHandler);
       window.removeEventListener("close-metrics-popup", closeHandler);
     };
-  }, []);
+  }, [showMetrics]);
 
   // -----------------------------
   //     FINAL RENDER
