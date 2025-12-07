@@ -8,7 +8,7 @@ import {
   Flex,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { FiGithub, FiLinkedin, FiMail, FiHeart } from 'react-icons/fi'
+import { FiGithub, FiLinkedin, FiMail } from 'react-icons/fi'
 
 const MotionBox = motion(Box)
 
@@ -50,19 +50,13 @@ export const Footer = () => {
                 BISHAL.DEV
               </Text>
             </HStack>
-            <Text fontFamily="mono" fontSize="xs" color="gray.500">
-              © {currentYear} Bishal Suvechha. All rights reserved.
-            </Text>
           </VStack>
 
           {/* Built With */}
           <HStack spacing={1} fontSize="sm" color="gray.500">
-            <Text fontFamily="mono" fontSize="xs">Built with</Text>
-            <FiHeart color="#ff3b5c" size={14} />
-            <Text fontFamily="mono" fontSize="xs">using</Text>
-            <Text fontFamily="mono" fontSize="xs" color="brand.cyan">React</Text>
-            <Text fontFamily="mono" fontSize="xs">+</Text>
-            <Text fontFamily="mono" fontSize="xs" color="brand.green">Chakra UI</Text>
+            <Text fontFamily="mono" fontSize="xs" color="gray.500">
+              © {currentYear} Bishal Suvechha. All rights reserved.
+            </Text>
           </HStack>
 
           {/* Social Links */}
