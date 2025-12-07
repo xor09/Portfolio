@@ -76,3 +76,5 @@ src/generated/
 # Cache for mac spotlight animations or precomputed data
 .cacheSpotlight/
 .cacheMetrics/
+.vercel
+.env*.local

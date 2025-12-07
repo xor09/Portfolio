@@ -11,10 +11,12 @@ import {
   Textarea,
   Grid,
   Flex,
+  useToast,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { FiMail, FiPhone, FiMapPin, FiGithub, FiLinkedin, FiExternalLink } from 'react-icons/fi'
 import { LiveChart } from './LiveChart'
+import { FormEvent, useState } from 'react'
 
 const MotionBox = motion(Box)
 
@@ -22,6 +24,9 @@ export const Contact = () => {
   const cardBg = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(18, 18, 26, 0.7)')
   const borderColor = useColorModeValue('rgba(0, 100, 80, 0.1)', 'rgba(0, 255, 136, 0.1)')
   const inputBg = useColorModeValue('gray.50', 'rgba(0, 0, 0, 0.2)')
+  const toast = useToast()
+
+  const [loading, setLoading] = useState(false)
 
   const contactInfo = [
     {
@@ -50,6 +55,57 @@ export const Contact = () => {
     { icon: FiExternalLink, label: 'LeetCode', href: 'https://leetcode.com/u/xor09/' },
     { icon: FiExternalLink, label: 'HackerEarth', href: 'https://www.hackerearth.com/@xor09/' },
   ]
+
+  // handle form submit -> call /api/send-email
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    const payload = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      subject: formData.get('subject'),
+      message: formData.get('message'),
+    }
+    console.log('Form data: ', e.currentTarget)
+
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to send')
+      }
+
+      toast({
+        status: 'success',
+        title: 'Message sent!',
+        description: 'I will get back to you soon.',
+        duration: 4000,
+        isClosable: true,
+      })
+
+      form.reset()
+    } catch (err) {
+      console.error(err)
+      toast({
+        status: 'error',
+        title: 'Failed to send message',
+        description: 'Please try again in a bit.',
+        duration: 4000,
+        isClosable: true,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
 
   return (
     <Box id="contact" py={20} position="relative">
@@ -244,10 +300,12 @@ export const Contact = () => {
               {'>'} Send a Message
             </Text>
 
-            <VStack as="form" spacing={5} align="stretch">
+            <form onSubmit={handleSubmit}>
+            <VStack spacing={5} align="stretch">
               <Box>
                 <Text fontSize="sm" fontWeight="500" mb={2}>Name</Text>
                 <Input
+                  name="name"
                   placeholder="Your name"
                   bg={inputBg}
                   border="1px solid"
@@ -257,12 +315,14 @@ export const Contact = () => {
                   fontFamily="mono"
                   _hover={{ borderColor: 'brand.green' }}
                   _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                  required
                 />
               </Box>
 
               <Box>
                 <Text fontSize="sm" fontWeight="500" mb={2}>Email</Text>
                 <Input
+                  name="email"
                   type="email"
                   placeholder="your@email.com"
                   bg={inputBg}
@@ -273,12 +333,14 @@ export const Contact = () => {
                   fontFamily="mono"
                   _hover={{ borderColor: 'brand.green' }}
                   _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                  required
                 />
               </Box>
 
               <Box>
                 <Text fontSize="sm" fontWeight="500" mb={2}>Subject</Text>
                 <Input
+                  name="subject"
                   placeholder="What's this about?"
                   bg={inputBg}
                   border="1px solid"
@@ -288,12 +350,14 @@ export const Contact = () => {
                   fontFamily="mono"
                   _hover={{ borderColor: 'brand.green' }}
                   _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                  required
                 />
               </Box>
 
               <Box>
                 <Text fontSize="sm" fontWeight="500" mb={2}>Message</Text>
                 <Textarea
+                  name="message"
                   placeholder="Tell me about your project..."
                   bg={inputBg}
                   border="1px solid"
@@ -304,20 +368,25 @@ export const Contact = () => {
                   _hover={{ borderColor: 'brand.green' }}
                   _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
                   resize="none"
+                  required
                 />
               </Box>
 
               <Button
+                type="submit"
                 variant="tradingFilled"
                 size="lg"
                 fontFamily="mono"
                 leftIcon={<FiMail />}
                 mt={2}
                 data-cursor-hover
+                isLoading={loading}
+                loadingText="Sending..."
               >
                 SEND MESSAGE
               </Button>
             </VStack>
+            </form>
 
             {/* Terminal decoration */}
             <Box mt={8} pt={6} borderTop="1px solid" borderColor={borderColor}>
