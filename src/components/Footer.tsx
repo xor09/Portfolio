@@ -68,7 +68,7 @@ export const Footer = () => {
           {/* Social Links */}
           <HStack spacing={4}>
             <SocialIcon href="https://github.com/xor09" icon={<FiGithub size={18} />} label="GitHub" />
-            <SocialIcon href="https://linkedin.com/in/bishal" icon={<FiLinkedin size={18} />} label="LinkedIn" />
+            <SocialIcon href="https://www.linkedin.com/in/suvechha-bishal/" icon={<FiLinkedin size={18} />} label="LinkedIn" />
             <SocialIcon href="mailto:suvechhabishal@gmail.com" icon={<FiMail size={18} />} label="Email" />
           </HStack>
         </Flex>

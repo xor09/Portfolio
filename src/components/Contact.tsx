@@ -46,9 +46,9 @@ export const Contact = () => {
 
   const socialLinks = [
     { icon: FiGithub, label: 'GitHub', href: 'https://github.com/xor09' },
-    { icon: FiLinkedin, label: 'LinkedIn', href: 'https://linkedin.com/in/bishal' },
-    { icon: FiExternalLink, label: 'LeetCode', href: 'https://leetcode.com/bishal' },
-    { icon: FiExternalLink, label: 'HackerEarth', href: 'https://hackerearth.com/bishal' },
+    { icon: FiLinkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/suvechha-bishal/' },
+    { icon: FiExternalLink, label: 'LeetCode', href: 'https://leetcode.com/u/xor09/' },
+    { icon: FiExternalLink, label: 'HackerEarth', href: 'https://www.hackerearth.com/@xor09/' },
   ]
 
   return (

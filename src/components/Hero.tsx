@@ -139,13 +139,14 @@ export const Hero = () => {
                 </Button>
                 <Button
                   as="a"
-                  href="/resume.pdf"
+                  href="https://drive.google.com/file/d/12H1swExorkVgBc2rW5vak-gek7K22kV1/view?usp=sharing"
                   download
                   variant="trading"
                   size="lg"
                   fontFamily="mono"
                   leftIcon={<FiDownload />}
                   data-cursor-hover
+                  target="_blank"
                 >
                   RESUME
                 </Button>
@@ -159,7 +160,7 @@ export const Hero = () => {
             >
               <HStack spacing={4} pt={4}>
                 <IconLink href="https://github.com/xor09" icon={<FiGithub size={20} />} label="GitHub" />
-                <IconLink href="https://linkedin.com/in/bishal" icon={<FiLinkedin size={20} />} label="LinkedIn" />
+                <IconLink href="https://www.linkedin.com/in/suvechha-bishal/" icon={<FiLinkedin size={20} />} label="LinkedIn" />
               </HStack>
             </MotionBox>
           </VStack>

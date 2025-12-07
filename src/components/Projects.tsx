@@ -31,8 +31,8 @@ export const Projects = () => {
       tech: ['React JS', 'Spring Boot', 'MySQL', 'JWT', 'REST APIs'],
       features: ['Multi-role Support', 'File Upload/Download', 'Email Notifications', 'JPA & Hibernate'],
       color: 'brand.green',
-      github: '#',
-      live: '#',
+      github: 'https://github.com/xor09/CoverEasy',
+      // live: '#',
     },
     {
       title: 'The House of Movies',
@@ -42,8 +42,8 @@ export const Projects = () => {
       tech: ['React JS', 'HTML', 'CSS', 'Bootstrap', 'MovieDB API'],
       features: ['+35% User Interaction', '99% Data Accuracy', 'Real-time Data', 'Trailer Viewing'],
       color: 'brand.cyan',
-      github: '#',
-      live: '#',
+      github: 'https://github.com/xor09/thehouseofmovies',
+      live: 'https://xor09.github.io/thehouseofmovies/#/',
     },
   ]
 
@@ -171,20 +171,26 @@ export const Projects = () => {
                         color="gray.400"
                         _hover={{ color: 'brand.green' }}
                         data-cursor-hover
+                        target='_blank'
                       >
                         <FiGithub />
                       </Button>
-                      <Button
-                        as="a"
-                        href={project.live}
-                        size="sm"
-                        variant="ghost"
-                        color="gray.400"
-                        _hover={{ color: 'brand.cyan' }}
-                        data-cursor-hover
-                      >
-                        <FiExternalLink />
-                      </Button>
+                      {
+                        project.live && (
+                          <Button
+                            as="a"
+                            href={project.live}
+                            size="sm"
+                            variant="ghost"
+                            color="gray.400"
+                            _hover={{ color: 'brand.cyan' }}
+                            data-cursor-hover
+                            target='_blank'
+                          >
+                            <FiExternalLink />
+                          </Button>
+                        )
+                      }
                     </HStack>
                   </HStack>
 

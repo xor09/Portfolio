@@ -95,7 +95,7 @@ export const About = () => {
                     With expertise in <Text as="span" color="brand.cyan" fontWeight="600">React, Node.js, 
                     Electron, and PostgreSQL</Text>, I develop comprehensive Risk Management Systems, 
                     admin panels, and trading interfaces that serve 100+ active users with 
-                    consistent sub-2-second response times.
+                    consistent sub-1-second response times.
                   </Text>
                 </Box>
 
