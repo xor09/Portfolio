@@ -1,7 +1,7 @@
 import { Box, HStack, IconButton, useColorModeValue } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { RiBarChartFill, RiHome5Fill, RiSearchEyeFill, RiTerminalBoxFill } from "react-icons/ri";
+import { RiBarChartFill, RiCodepenFill, RiHome5Fill, RiSearchEyeFill, RiTerminalBoxFill } from "react-icons/ri";
 import { dockElements } from "../constants";
 
 const MotionBox = motion(Box);
@@ -23,6 +23,7 @@ export const BottomDock = () => {
     window.dispatchEvent(new Event("close-spotlight"));
     window.dispatchEvent(new Event("close-metrics-popup"));
     window.dispatchEvent(new Event("close-terminal"));
+    window.dispatchEvent(new Event("close-sandbox"));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -31,6 +32,7 @@ export const BottomDock = () => {
     window.dispatchEvent(new Event("open-spotlight"));
     window.dispatchEvent(new Event("close-metrics-popup"));
     window.dispatchEvent(new Event("close-terminal"));
+     window.dispatchEvent(new Event("close-sandbox"));
   };
 
   const onMetricsClick = () => {
@@ -38,6 +40,7 @@ export const BottomDock = () => {
     window.dispatchEvent(new Event("open-metrics-popup"));
     window.dispatchEvent(new Event("close-spotlight"));
     window.dispatchEvent(new Event("close-terminal"));
+     window.dispatchEvent(new Event("close-sandbox"));
   };
 
   const onTerminalClick = () => {
@@ -45,7 +48,16 @@ export const BottomDock = () => {
     window.dispatchEvent(new Event("open-terminal"));
     window.dispatchEvent(new Event("close-spotlight"));
     window.dispatchEvent(new Event("close-metrics-popup"));
+     window.dispatchEvent(new Event("close-sandbox"));
   };
+
+  const onCodeEditorClick = () => {
+    setAndDispatch(dockElements.SANDBOX);
+    window.dispatchEvent(new Event("open-sandbox"));
+    window.dispatchEvent(new Event("close-spotlight"));
+    window.dispatchEvent(new Event("close-metrics-popup"));
+    window.dispatchEvent(new Event("close-terminal"));
+  }
 
   // LISTEN FOR POPUP CLOSES (ESC or overlay)
   useEffect(() => {
@@ -145,6 +157,7 @@ export const BottomDock = () => {
             <DockIcon id="spotlight" icon={<RiSearchEyeFill size={22} />} onClick={onSpotlightClick} />
             <DockIcon id="metrics" icon={<RiBarChartFill size={22} />} onClick={onMetricsClick} />
             <DockIcon id="terminal" icon={<RiTerminalBoxFill size={22} />} onClick={onTerminalClick} />
+            <DockIcon id="sandbox" icon={<RiCodepenFill size={22} />} onClick={onCodeEditorClick} />
           </HStack>
         </MotionBox>
       )}

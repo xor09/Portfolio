@@ -3,4 +3,5 @@ export const dockElements = {
     SPOTLIGHT : "spotlight",
     METRICS : "metrics",
     TERMINAL : "terminal",
+    SANDBOX : "sandbox",
 }

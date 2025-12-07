@@ -24,7 +24,8 @@ interface SpotlightCommand {
   isEasterEgg?: boolean
 }
 
-export const Spotlight = () => {
+export const Spotlight = (props: any) => {
+  const { boostEnabled } = props
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [activeEasterEgg, setActiveEasterEgg] = useState<string | null>(null)
@@ -666,35 +667,38 @@ export const Spotlight = () => {
       </AnimatePresence>
 
       {/* Keyboard hint (shown in corner) */}
-      <MotionBox
-        position="fixed"
-        bottom={4}
-        right={4}
-        zIndex={50}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2 }}
-      >
-        <HStack
-          bg={useColorModeValue('rgba(255,255,255,0.8)', 'rgba(18, 18, 26, 0.8)')}
-          backdropFilter="blur(10px)"
-          px={3}
-          py={2}
-          borderRadius="lg"
-          border="1px solid"
-          borderColor={borderColor}
-          fontSize="xs"
-          color="gray.500"
-          spacing={2}
-          _hover={{ borderColor: 'brand.green' }}
-          cursor="pointer"
-          onClick={() => setIsOpen(true)}
-        >
-          <Kbd>⌘</Kbd>
-          <Text>+</Text>
-          <Kbd>K</Kbd>
-        </HStack>
-      </MotionBox>
+      {
+        boostEnabled ?
+          <MotionBox
+            position="fixed"
+            bottom={4}
+            right={4}
+            zIndex={50}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2 }}
+          >
+            <HStack
+              bg={useColorModeValue('rgba(255,255,255,0.8)', 'rgba(18, 18, 26, 0.8)')}
+              backdropFilter="blur(10px)"
+              px={3}
+              py={2}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor={borderColor}
+              fontSize="xs"
+              color="gray.500"
+              spacing={2}
+              _hover={{ borderColor: 'brand.green' }}
+              cursor="pointer"
+              onClick={() => setIsOpen(true)}
+            >
+              <Kbd>⌘</Kbd>
+              <Text>+</Text>
+              <Kbd>K</Kbd>
+            </HStack>
+          </MotionBox> : null
+      }
     </>
   )
 }

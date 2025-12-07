@@ -15,6 +15,7 @@ import {
   DrawerCloseButton,
   useDisclosure,
   VStack,
+  Switch,
 } from '@chakra-ui/react'
 import { MoonIcon, SunIcon, HamburgerIcon } from '@chakra-ui/icons'
 import { motion } from 'framer-motion'
@@ -30,17 +31,20 @@ const navItems = [
   { label: 'Contact', href: '#contact' },
 ]
 
-export const Navbar = () => {
+export const Navbar = (props: any) => {
+  const { boostEnabled, handleBoostToggle } = props
   const { colorMode, toggleColorMode } = useColorMode()
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const bgColor = useColorModeValue('rgba(245, 247, 250, 0.8)', 'rgba(10, 10, 15, 0.8)')
   const borderColor = useColorModeValue('rgba(0, 100, 80, 0.1)', 'rgba(0, 255, 136, 0.1)')
 
+
+
   return (
     <MotionBox
       position="fixed"
-      top="40px"
+      top="50px"
       left="0"
       right="0"
       zIndex="99"
@@ -52,7 +56,7 @@ export const Navbar = () => {
         <Flex
           bg={bgColor}
           backdropFilter="blur(20px)"
-          borderRadius="2xl"
+          borderBottomRadius="2xl"
           border="1px solid"
           borderColor={borderColor}
           px={6}
@@ -106,6 +110,22 @@ export const Navbar = () => {
           </HStack>
 
           <HStack spacing={3}>
+            {/* BOOST toggle (real switch) */}
+            <HStack spacing={1} align="center">
+              <Text
+                fontFamily="mono"
+                fontSize="xs"
+                color={boostEnabled ? 'brand.green' : 'gray.500'}
+              >
+                BOOST
+              </Text>
+              <Switch
+                size="sm"
+                isChecked={boostEnabled}
+                onChange={handleBoostToggle}
+                colorScheme="green"
+              />
+            </HStack>
             <IconButton
               aria-label="Toggle color mode"
               icon={colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -172,6 +192,29 @@ export const Navbar = () => {
                   {item.label}
                 </Button>
               ))}
+              
+              {/* BOOST in mobile menu if you want there too */}
+              <HStack
+                justify="space-between"
+                align="center"
+                mt={4}
+                px={1}
+              >
+                <Text
+                  fontFamily="mono"
+                  fontSize="sm"
+                  color={boostEnabled ? 'brand.green' : 'gray.500'}
+                >
+                  BOOST
+                </Text>
+                <Switch
+                  size="md"
+                  isChecked={boostEnabled}
+                  onChange={handleBoostToggle}
+                  colorScheme="green"
+                />
+              </HStack>
+
               <Button
                 as="a"
                 href="#contact"

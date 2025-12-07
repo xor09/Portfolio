@@ -1,5 +1,5 @@
 import { Box, useColorMode } from '@chakra-ui/react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { CustomCursor } from './components/CustomCursor'
 import { MarketTicker } from './components/MarketTicker'
 import { Navbar } from './components/Navbar'
@@ -18,13 +18,28 @@ import { BottomDock } from './components/BottomDock'
 import { MetricsPopup } from './components/MatrixPopup'
 import { TerminalPopup } from './components/TerminalPopup'
 import { dockElements } from './constants'
+import { CodeSandboxFullscreen } from './components/CodeSandboxFullscreen'
 
 function App() {
   const { colorMode } = useColorMode()
+  const [boostEnabled, setBoostEnabled] = useState(false)
+
+  const handleBoostToggle = () => {
+    const next = !boostEnabled
+    setBoostEnabled(next)
+
+    // Notify BottomDock (or any listener) about boost mode change
+    window.dispatchEvent(
+      new CustomEvent('bottom-dock-boost', {
+        detail: { enabled: next },
+      })
+    )
+  }
   
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', colorMode)
   }, [colorMode])
+
 
   // Handle Global keyboard shortcut
   useEffect(() => {
@@ -54,7 +69,10 @@ function App() {
       {/* Idle Screensaver */}
       <IdleScreensaver />
 
-      <BottomDock />
+      {/* Bottom Dock */}
+      {
+        boostEnabled ? <BottomDock /> : null
+      }
 
 
       {/* Custom Cursor */}
@@ -64,15 +82,22 @@ function App() {
       <MetricsPopup />
       
       {/* Spotlight */}
-      <Spotlight />
+      <Spotlight 
+        boostEnabled={boostEnabled}
+      />
 
       <TerminalPopup />
+
+      <CodeSandboxFullscreen />x
 
       {/* Market Ticker */}
       <MarketTicker />
 
       {/* Navigation */}
-      <Navbar />
+      <Navbar 
+        boostEnabled={boostEnabled}
+        handleBoostToggle={handleBoostToggle}
+      />
 
       {/* Main Content */}
       <Box as="main" position="relative" zIndex={1}>
