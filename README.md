@@ -108,14 +108,3 @@ The API returns JSON with a `message` describing success or failure.
 - `npm run build` — typecheck and build for production
 - `npm run preview` — preview the production build
 
-## Contributing
-
-If you'd like to contribute, open an issue or pull request. For code changes, follow common practices: fork, create a branch, run and test locally, then open a PR.
-
-## License
-
-This repository does not include a license file. Add one if you plan to make the project public under a specific license.
-
-## Questions / Contact
-
-If you need help configuring the SMTP settings or deployment, open an issue or contact the repository owner.
