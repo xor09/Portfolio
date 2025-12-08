@@ -16,7 +16,7 @@ import {
 import { motion } from 'framer-motion'
 import { FiMail, FiPhone, FiMapPin, FiGithub, FiLinkedin, FiExternalLink } from 'react-icons/fi'
 import { LiveChart } from './LiveChart'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useState, useEffect, useRef, useCallback } from 'react'
 
 const MotionBox = motion(Box)
 
@@ -27,6 +27,12 @@ export const Contact = () => {
   const toast = useToast()
 
   const [loading, setLoading] = useState(false)
+  const [turnstileReady, setTurnstileReady] = useState(false)
+  const widgetIdRef = useRef<string | null>(null)
+  const tokenResolveRef = useRef<((token: string) => void) | null>(null)
+  const tokenRejectRef = useRef<((error: Error) => void) | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const contactInfo = [
     {
@@ -56,21 +62,223 @@ export const Contact = () => {
     { icon: FiExternalLink, label: 'HackerEarth', href: 'https://www.hackerearth.com/@xor09/' },
   ]
 
-  // handle form submit -> call /api/send-email
+  // Clear pending promise handlers
+  const clearPendingHandlers = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    tokenResolveRef.current = null
+    tokenRejectRef.current = null
+  }, [])
+
+  // Callback handlers for Turnstile
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    console.log('✅ Turnstile success')
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    if (tokenResolveRef.current) {
+      tokenResolveRef.current(token)
+      clearPendingHandlers()
+    }
+  }, [clearPendingHandlers])
+
+  const handleTurnstileError = useCallback((error?: unknown) => {
+    console.error('❌ Turnstile error:', error)
+    if (tokenRejectRef.current) {
+      tokenRejectRef.current(new Error('Turnstile verification failed'))
+      clearPendingHandlers()
+    }
+  }, [clearPendingHandlers])
+
+  const handleTurnstileExpired = useCallback(() => {
+    console.warn('⚠️ Turnstile token expired')
+    if (tokenRejectRef.current) {
+      tokenRejectRef.current(new Error('Turnstile token expired'))
+      clearPendingHandlers()
+    }
+  }, [clearPendingHandlers])
+
+  const handleTurnstileTimeout = useCallback(() => {
+    console.warn('⏱️ Turnstile timeout')
+    if (tokenRejectRef.current) {
+      tokenRejectRef.current(new Error('Turnstile verification timed out'))
+      clearPendingHandlers()
+    }
+  }, [clearPendingHandlers])
+
+  // Initialize Turnstile widget
+  useEffect(() => {
+    const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY
+
+    if (!siteKey) {
+      console.error('❌ VITE_TURNSTILE_SITE_KEY is not set!')
+      return
+    }
+
+    const initWidget = () => {
+      if (!window.turnstile) {
+        return false
+      }
+
+      const container = document.getElementById('turnstile-container')
+      if (!container) {
+        return false
+      }
+
+      // Remove existing widget if any
+      if (widgetIdRef.current) {
+        try {
+          window.turnstile.remove(widgetIdRef.current)
+        } catch (e) {
+          // Ignore
+        }
+        widgetIdRef.current = null
+      }
+
+      try {
+        widgetIdRef.current = window.turnstile.render(container, {
+          sitekey: siteKey,
+          theme: 'dark',
+          size: 'invisible',
+          execution: 'execute',
+          callback: handleTurnstileSuccess,
+          'error-callback': handleTurnstileError,
+          'expired-callback': handleTurnstileExpired,
+          'timeout-callback': handleTurnstileTimeout,
+        })
+        console.log('✅ Turnstile ready')
+        setTurnstileReady(true)
+        return true
+      } catch (err) {
+        console.error('❌ Failed to render Turnstile:', err)
+        return false
+      }
+    }
+
+    // Try immediately
+    if (initWidget()) return
+
+    // Poll for Turnstile to be ready
+    const interval = setInterval(() => {
+      if (initWidget()) {
+        clearInterval(interval)
+      }
+    }, 500)
+
+    // Stop polling after 10 seconds
+    const maxWait = setTimeout(() => {
+      clearInterval(interval)
+    }, 10000)
+
+    // Cleanup
+    return () => {
+      clearInterval(interval)
+      clearTimeout(maxWait)
+      if (widgetIdRef.current && window.turnstile) {
+        try {
+          window.turnstile.remove(widgetIdRef.current)
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }
+  }, [handleTurnstileSuccess, handleTurnstileError, handleTurnstileExpired, handleTurnstileTimeout])
+
+  // Get Turnstile token
+  const getTurnstileToken = (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!window.turnstile) {
+        reject(new Error('Turnstile not loaded'))
+        return
+      }
+
+      if (!widgetIdRef.current) {
+        reject(new Error('Turnstile widget not initialized'))
+        return
+      }
+
+      clearPendingHandlers()
+
+      tokenResolveRef.current = resolve
+      tokenRejectRef.current = reject
+
+      timeoutRef.current = setTimeout(() => {
+        if (tokenRejectRef.current) {
+          tokenRejectRef.current(new Error('Verification timed out. Please try again.'))
+          clearPendingHandlers()
+        }
+      }, 30000)
+
+      try {
+        window.turnstile.reset(widgetIdRef.current)
+        window.turnstile.execute(widgetIdRef.current)
+      } catch (err) {
+        clearPendingHandlers()
+        reject(err)
+      }
+    })
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    // IMPORTANT: Capture form data BEFORE any async operations
+    // e.currentTarget becomes null after await
+    const form = formRef.current
+    if (!form) {
+      console.error('Form ref not found')
+      return
+    }
+
+    const formData = new FormData(form)
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const subject = formData.get('subject') as string
+    const message = formData.get('message') as string
+    const botField = formData.get('botField') as string
+
     setLoading(true)
 
-    const form = e.currentTarget
-    const formData = new FormData(form)
+    if (!turnstileReady) {
+      toast({
+        status: 'warning',
+        title: 'Please wait',
+        description: 'Security verification is loading...',
+        duration: 3000,
+        isClosable: true,
+      })
+      setLoading(false)
+      return
+    }
+
+    let turnstileToken: string
+
+    try {
+      turnstileToken = await getTurnstileToken()
+    } catch (err) {
+      console.error('❌ Turnstile error:', err)
+      toast({
+        status: 'error',
+        title: 'Verification failed',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        duration: 4000,
+        isClosable: true,
+      })
+      setLoading(false)
+      return
+    }
 
     const payload = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      subject: formData.get('subject'),
-      message: formData.get('message'),
+      name,
+      email,
+      subject,
+      message,
+      botField,
+      turnstileToken,
     }
-    console.log('Form data: ', e.currentTarget)
 
     try {
       const res = await fetch('/api/send-email', {
@@ -80,7 +288,8 @@ export const Contact = () => {
       })
 
       if (!res.ok) {
-        throw new Error('Failed to send')
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to send')
       }
 
       toast({
@@ -93,11 +302,11 @@ export const Contact = () => {
 
       form.reset()
     } catch (err) {
-      console.error(err)
+      console.error('❌ Send error:', err)
       toast({
         status: 'error',
         title: 'Failed to send message',
-        description: 'Please try again in a bit.',
+        description: err instanceof Error ? err.message : 'Please try again in a bit.',
         duration: 4000,
         isClosable: true,
       })
@@ -105,7 +314,6 @@ export const Contact = () => {
       setLoading(false)
     }
   }
-
 
   return (
     <Box id="contact" py={20} position="relative">
@@ -168,7 +376,7 @@ export const Contact = () => {
                 <Text fontFamily="mono" fontSize="sm" color="brand.green" mb={6}>
                   {'>'} Get in Touch
                 </Text>
-                
+
                 <VStack spacing={4} align="stretch">
                   {contactInfo.map((item, index) => (
                     <MotionBox
@@ -204,7 +412,9 @@ export const Contact = () => {
                           <item.icon size={18} />
                         </Box>
                         <VStack align="start" spacing={0}>
-                          <Text fontSize="xs" color="gray.500">{item.label}</Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {item.label}
+                          </Text>
                           <Text fontWeight="600">{item.value}</Text>
                         </VStack>
                       </HStack>
@@ -225,7 +435,7 @@ export const Contact = () => {
                 <Text fontFamily="mono" fontSize="sm" color="brand.cyan" mb={6}>
                   {'>'} Social Profiles
                 </Text>
-                
+
                 <Grid templateColumns="repeat(2, 1fr)" gap={3}>
                   {socialLinks.map((link, index) => (
                     <MotionBox
@@ -251,7 +461,9 @@ export const Contact = () => {
                     >
                       <HStack spacing={3}>
                         <link.icon size={18} color="#00d4ff" />
-                        <Text fontSize="sm" fontWeight="500">{link.label}</Text>
+                        <Text fontSize="sm" fontWeight="500">
+                          {link.label}
+                        </Text>
                       </HStack>
                     </MotionBox>
                   ))}
@@ -300,104 +512,139 @@ export const Contact = () => {
               {'>'} Send a Message
             </Text>
 
-            <form onSubmit={handleSubmit}>
-            <VStack spacing={5} align="stretch">
-              <Box>
-                <Text fontSize="sm" fontWeight="500" mb={2}>Name</Text>
-                <Input
-                  name="name"
-                  placeholder="Your name"
-                  bg={inputBg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  py={6}
-                  fontFamily="mono"
-                  _hover={{ borderColor: 'brand.green' }}
-                  _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
-                  required
-                />
-              </Box>
+            <form ref={formRef} onSubmit={handleSubmit}>
+              <VStack spacing={5} align="stretch">
+                <Box>
+                  <Text fontSize="sm" fontWeight="500" mb={2}>
+                    Name
+                  </Text>
+                  <Input
+                    name="name"
+                    placeholder="Your name"
+                    bg={inputBg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    py={6}
+                    fontFamily="mono"
+                    _hover={{ borderColor: 'brand.green' }}
+                    _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                    required
+                  />
+                </Box>
 
-              <Box>
-                <Text fontSize="sm" fontWeight="500" mb={2}>Email</Text>
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  bg={inputBg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  py={6}
-                  fontFamily="mono"
-                  _hover={{ borderColor: 'brand.green' }}
-                  _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
-                  required
-                />
-              </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="500" mb={2}>
+                    Email
+                  </Text>
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    bg={inputBg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    py={6}
+                    fontFamily="mono"
+                    _hover={{ borderColor: 'brand.green' }}
+                    _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                    required
+                  />
+                </Box>
 
-              <Box>
-                <Text fontSize="sm" fontWeight="500" mb={2}>Subject</Text>
-                <Input
-                  name="subject"
-                  placeholder="What's this about?"
-                  bg={inputBg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  py={6}
-                  fontFamily="mono"
-                  _hover={{ borderColor: 'brand.green' }}
-                  _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
-                  required
-                />
-              </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="500" mb={2}>
+                    Subject
+                  </Text>
+                  <Input
+                    name="subject"
+                    placeholder="What's this about?"
+                    bg={inputBg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    py={6}
+                    fontFamily="mono"
+                    _hover={{ borderColor: 'brand.green' }}
+                    _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                    required
+                  />
+                </Box>
 
-              <Box>
-                <Text fontSize="sm" fontWeight="500" mb={2}>Message</Text>
-                <Textarea
-                  name="message"
-                  placeholder="Tell me about your project..."
-                  bg={inputBg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  rows={5}
-                  fontFamily="mono"
-                  _hover={{ borderColor: 'brand.green' }}
-                  _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
-                  resize="none"
-                  required
-                />
-              </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="500" mb={2}>
+                    Message
+                  </Text>
+                  <Textarea
+                    name="message"
+                    placeholder="Tell me about your project..."
+                    bg={inputBg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    rows={5}
+                    fontFamily="mono"
+                    _hover={{ borderColor: 'brand.green' }}
+                    _focus={{ borderColor: 'brand.green', boxShadow: '0 0 0 1px #00ff88' }}
+                    resize="none"
+                    required
+                  />
+                </Box>
 
-              <Button
-                type="submit"
-                variant="tradingFilled"
-                size="lg"
-                fontFamily="mono"
-                leftIcon={<FiMail />}
-                mt={2}
-                data-cursor-hover
-                isLoading={loading}
-                loadingText="Sending..."
-              >
-                SEND MESSAGE
-              </Button>
-            </VStack>
+                {/* Honeypot field */}
+                <input
+                  name="botField"
+                  type="text"
+                  style={{ display: 'none' }}
+                  autoComplete="off"
+                  tabIndex={-1}
+                />
+
+                {/* Turnstile container */}
+                <div id="turnstile-container" />
+
+                <Button
+                  type="submit"
+                  variant="tradingFilled"
+                  size="lg"
+                  fontFamily="mono"
+                  leftIcon={<FiMail />}
+                  mt={2}
+                  data-cursor-hover
+                  isLoading={loading}
+                  loadingText="Sending..."
+                  isDisabled={!turnstileReady}
+                >
+                  {turnstileReady ? 'SEND MESSAGE' : 'Loading...'}
+                </Button>
+              </VStack>
             </form>
 
             {/* Terminal decoration */}
             <Box mt={8} pt={6} borderTop="1px solid" borderColor={borderColor}>
               <Text fontFamily="mono" fontSize="xs" color="gray.500">
-                <Text as="span" color="brand.green">const</Text>{' '}
-                <Text as="span" color="brand.cyan">response</Text> ={' '}
-                <Text as="span" color="brand.gold">await</Text> sendMessage(yourIdea);
+                <Text as="span" color="brand.green">
+                  const
+                </Text>{' '}
+                <Text as="span" color="brand.cyan">
+                  response
+                </Text>{' '}
+                ={' '}
+                <Text as="span" color="brand.gold">
+                  await
+                </Text>{' '}
+                sendMessage(yourIdea);
               </Text>
               <Text fontFamily="mono" fontSize="xs" color="gray.500" mt={1}>
-                <Text as="span" color="brand.green">console</Text>.log(
-                <Text as="span" color="brand.gold">"Looking forward to hearing from you!"</Text>);
+                <Text as="span" color="brand.green">
+                  console
+                </Text>
+                .log(
+                <Text as="span" color="brand.gold">
+                  "Looking forward to hearing from you!"
+                </Text>
+                );
               </Text>
             </Box>
           </MotionBox>
